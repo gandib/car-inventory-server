@@ -30,11 +30,11 @@ function verifyJWT(req, res, next) {
     })
 }
 
-
-
+// const uri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@main-shard-00-00-03xkr.mongodb.net:27017,main-shard-00-01-03xkr.mongodb.net:27017,main-shard-00-02-03xkr.mongodb.net:27017/main?ssl=true&replicaSet=Main-shard-0&authSource=admin&retryWrites=true`;
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.o3nucxx.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
 
 
 async function run() {
@@ -59,6 +59,23 @@ async function run() {
             const products = await cursor.toArray();
             res.send(products);
         });
+
+        // app.get('/inventoryByEmail', async (req, res) => {
+        //     const decodedEmail = req.decoded.email;
+        //     const email = req.query.email;
+        //     // if (email === decodedEmail) {
+        //     const query = {};
+        //     const cursor = productCollection.find(query);
+        //     const products = await cursor.toArray();
+        //     res.send(products);
+        //     // }
+        //     // else {
+        //     //     res.status(403).send({ message: 'forbidden access' });
+        //     // }
+
+        // });
+
+
 
         app.get('/inventory/:id', async (req, res) => {
             const id = req.params.id;
@@ -85,6 +102,12 @@ async function run() {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await productCollection.deleteOne(query);
+            res.send(result);
+        });
+
+        app.post('/inventory', async (req, res) => {
+            const product = req.body;
+            const result = await productCollection.insertOne(product);
             res.send(result);
         });
 
