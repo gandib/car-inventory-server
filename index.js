@@ -32,16 +32,21 @@ function verifyJWT(req, res, next) {
 
 // const uri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@main-shard-00-00-03xkr.mongodb.net:27017,main-shard-00-01-03xkr.mongodb.net:27017,main-shard-00-02-03xkr.mongodb.net:27017/main?ssl=true&replicaSet=Main-shard-0&authSource=admin&retryWrites=true`;
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.o3nucxx.mongodb.net/?retryWrites=true&w=majority`;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.o3nucxx.mongodb.net/?retryWrites=true&w=majority`;
+// const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
 
-async function run() {
+// var MongoClient = require('mongodb').MongoClient;
+
+const uri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@ac-47ico0j-shard-00-00.o3nucxx.mongodb.net:27017,ac-47ico0j-shard-00-01.o3nucxx.mongodb.net:27017,ac-47ico0j-shard-00-02.o3nucxx.mongodb.net:27017/?ssl=true&replicaSet=atlas-7qjc0v-shard-0&authSource=admin&retryWrites=true&w=majority`;
+
+MongoClient.connect(uri, function (err, client) {
+    const productCollection = client.db('inventory').collection('product');
+    // perform actions on the collection object
+    console.log('cc')
+    client.connect();
     try {
-        await client.connect();
-        const productCollection = client.db('inventory').collection('product');
-
         //Auth
         app.post('/login', async (req, res) => {
             const user = req.body;
@@ -54,26 +59,34 @@ async function run() {
 
 
         app.get('/inventory', async (req, res) => {
+            const page = parseInt(req.query.page);
+            const size = parseInt(req.query.size);
             const query = {};
             const cursor = productCollection.find(query);
-            const products = await cursor.toArray();
+            let products;
+            if (page || size) {
+                products = await cursor.skip(page * size).limit(size).toArray();
+            }
+            else {
+                products = await cursor.toArray();
+            }
             res.send(products);
         });
 
-        // app.get('/inventoryByEmail', async (req, res) => {
-        //     const decodedEmail = req.decoded.email;
-        //     const email = req.query.email;
-        //     // if (email === decodedEmail) {
-        //     const query = {};
-        //     const cursor = productCollection.find(query);
-        //     const products = await cursor.toArray();
-        //     res.send(products);
-        //     // }
-        //     // else {
-        //     //     res.status(403).send({ message: 'forbidden access' });
-        //     // }
+        app.get('/inventoryByEmail', verifyJWT, async (req, res) => {
+            const decodedEmail = req.decoded.email;
+            const email = req.query.email;
+            if (email === decodedEmail) {
+                const query = { email: email };
+                const cursor = productCollection.find(query);
+                const products = await cursor.toArray();
+                res.send(products);
+            }
+            else {
+                res.status(403).send({ message: 'forbidden access' });
+            }
 
-        // });
+        });
 
 
 
@@ -111,11 +124,100 @@ async function run() {
             res.send(result);
         });
 
+        app.get('/inventoryCount', async (req, res) => {
+            const count = await productCollection.estimatedDocumentCount();
+            res.send({ count });
+        });
+
+
 
     }
     finally { }
-}
-run().catch(console.dir);
+
+    // client.close();
+});
+
+
+
+// async function run() {
+//     try {
+//         await client.connect();
+//         const productCollection = client.db('inventory').collection('product');
+
+//         //Auth
+//         app.post('/login', async (req, res) => {
+//             const user = req.body;
+//             console.log(user)
+//             const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+//                 expiresIn: '1d'
+//             });
+//             res.send({ accessToken });
+//         });
+
+
+//         app.get('/inventory', async (req, res) => {
+//             const query = {};
+//             const cursor = productCollection.find(query);
+//             const products = await cursor.toArray();
+//             res.send(products);
+//         });
+
+//         // app.get('/inventoryByEmail', async (req, res) => {
+//         //     const decodedEmail = req.decoded.email;
+//         //     const email = req.query.email;
+//         //     // if (email === decodedEmail) {
+//         //     const query = {};
+//         //     const cursor = productCollection.find(query);
+//         //     const products = await cursor.toArray();
+//         //     res.send(products);
+//         //     // }
+//         //     // else {
+//         //     //     res.status(403).send({ message: 'forbidden access' });
+//         //     // }
+
+//         // });
+
+
+
+//         app.get('/inventory/:id', async (req, res) => {
+//             const id = req.params.id;
+//             const query = { _id: ObjectId(id) };
+//             const results = await productCollection.findOne(query);
+//             res.send(results);
+//         });
+
+//         app.put('/inventory/:id', async (req, res) => {
+//             const id = req.params.id;
+//             const updatedInventory = req.body;
+//             const filter = { _id: ObjectId(id) };
+//             const options = { upsert: true };
+//             const updatedDoc = {
+//                 $set: {
+//                     quantity: updatedInventory.quantity
+//                 }
+//             };
+//             const result = await productCollection.updateOne(filter, updatedDoc, options);
+//             res.send(result);
+//         });
+
+//         app.delete('/inventory/:id', async (req, res) => {
+//             const id = req.params.id;
+//             const query = { _id: ObjectId(id) };
+//             const result = await productCollection.deleteOne(query);
+//             res.send(result);
+//         });
+
+//         app.post('/inventory', async (req, res) => {
+//             const product = req.body;
+//             const result = await productCollection.insertOne(product);
+//             res.send(result);
+//         });
+
+
+//     }
+//     finally { }
+// }
+// run().catch(console.dir);
 
 
 
