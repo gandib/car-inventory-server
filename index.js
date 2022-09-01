@@ -47,6 +47,7 @@ MongoClient.connect(uri, function (err, client) {
     console.log('cc')
     client.connect();
     try {
+
         //Auth
         app.post('/login', async (req, res) => {
             const user = req.body;
@@ -73,6 +74,7 @@ MongoClient.connect(uri, function (err, client) {
             res.send(products);
         });
 
+
         app.get('/inventoryByEmail', verifyJWT, async (req, res) => {
             const decodedEmail = req.decoded.email;
             const email = req.query.email;
@@ -97,6 +99,7 @@ MongoClient.connect(uri, function (err, client) {
             res.send(results);
         });
 
+
         app.put('/inventory/:id', async (req, res) => {
             const id = req.params.id;
             const updatedInventory = req.body;
@@ -111,6 +114,8 @@ MongoClient.connect(uri, function (err, client) {
             res.send(result);
         });
 
+
+
         app.delete('/inventory/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -118,17 +123,20 @@ MongoClient.connect(uri, function (err, client) {
             res.send(result);
         });
 
+
+
         app.post('/inventory', async (req, res) => {
             const product = req.body;
             const result = await productCollection.insertOne(product);
             res.send(result);
         });
 
+
+
         app.get('/inventoryCount', async (req, res) => {
             const count = await productCollection.estimatedDocumentCount();
             res.send({ count });
         });
-
 
 
     }
@@ -137,7 +145,7 @@ MongoClient.connect(uri, function (err, client) {
     // client.close();
 });
 
-
+// not work node.js 4.1 or later
 
 // async function run() {
 //     try {
