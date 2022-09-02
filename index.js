@@ -45,7 +45,7 @@ MongoClient.connect(uri, function (err, client) {
     const productCollection = client.db('inventory').collection('product');
     const tokenCollection = client.db('tokendb').collection('token');
     // perform actions on the collection object
-    console.log('cc')
+    console.log('DB connected');
     client.connect();
     try {
 
