@@ -43,6 +43,7 @@ const uri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@ac-47ico0j-
 
 MongoClient.connect(uri, function (err, client) {
     const productCollection = client.db('inventory').collection('product');
+    const tokenCollection = client.db('tokendb').collection('token');
     // perform actions on the collection object
     console.log('cc')
     client.connect();
@@ -137,6 +138,8 @@ MongoClient.connect(uri, function (err, client) {
             const count = await productCollection.estimatedDocumentCount();
             res.send({ count });
         });
+
+
 
 
     }
